@@ -9,6 +9,7 @@ import (
     "math/big"
 
     base58 "github.com/itchyny/base58-go"
+    "crypto/ec"
 
 )
 
