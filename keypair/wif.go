@@ -9,7 +9,7 @@ import (
     "math/big"
 
     base58 "github.com/itchyny/base58-go"
-    "ontology-crypto/ec"
+
 )
 
 func Key2WIF(key PrivateKey) ([]byte, error) {

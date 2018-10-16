@@ -5,7 +5,7 @@ import (
     "strings"
 
     "github.com/pkg/errors"
-    "ontology-crypto/sm2"
+
 )
 
 const(
