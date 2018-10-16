@@ -1,0 +1,5 @@
+package: ontology-crypto
+import:
+- pakcage : golang.org/x/crypto
+  repo: https://github.com/golang/crypto.git
+  - ed25519
