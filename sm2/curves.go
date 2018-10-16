@@ -35,7 +35,7 @@ func initP256(){
 func (curve p256Curve) Params() *elliptic.CurveParams{
     return curve.CurveParams
 }
-func (curve p256Curve) ABytes() []bytes{
+func (curve p256Curve) ABytes() []byte {
     return curve.a
 }
 func SM2P256V1() elliptic.Curve{

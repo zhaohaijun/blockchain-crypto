@@ -10,6 +10,7 @@ import (
     "fmt"
     "io"
     "math/big"
+    "github.com/zhaohaijun/crypto/sm3"
 
 
 )

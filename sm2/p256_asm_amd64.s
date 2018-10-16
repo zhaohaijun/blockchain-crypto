@@ -2725,3 +2725,4 @@ TEXT ·p256_sm2PointDoubleAsm(SB),NOSPLIT,$256-48
 	MOVQ $0, rptr
 
 	RET
+/* ---------------------------------------*/

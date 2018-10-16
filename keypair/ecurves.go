@@ -5,7 +5,7 @@ import (
     "errors"
     "strings"
 
-    "crypto/sm2"
+    "github.com/zhaohaijun/crypto/sm2"
 )
 
 const (
