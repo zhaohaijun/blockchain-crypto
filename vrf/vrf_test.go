@@ -1,10 +1,7 @@
 package vrf
-import (
-    "testing"
 
-    "github.com/zhaohaijun/blockchain-crypto/keypair"
-)
-
+import "testing"
+import "github.com/zhaohaijun/blockchain-crypto/keypair"
 func testVrf(t *testing.T, kt keypair.KeyType, curve byte) {
     pri, pub, err := keypair.GenerateKeyPair(kt, curve)
     if err != nil {
