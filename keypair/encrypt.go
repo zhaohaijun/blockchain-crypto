@@ -7,7 +7,7 @@ import (
     "crypto/sha256"
     "errors"
 
-    "github.com/zhaohaijun/crypto/ec"
+    "github.com/zhaohaijun/blockchain-crypto/ec"
 
     "golang.org/x/crypto/ed25519"
     "golang.org/x/crypto/scrypt"

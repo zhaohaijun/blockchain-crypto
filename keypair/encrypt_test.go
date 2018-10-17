@@ -6,7 +6,7 @@ import (
     "errors"
     "testing"
 
-    "github.com/zhaohaijun/crypto/ec"
+    "github.com/zhaohaijun/blockchain-crypto/ec"
 )
 
 var d = "3e47428fd73f915a7937bf1f8d3bffc27a45dbb6ef4e57bd9513c1a8bfbcbfd4"
