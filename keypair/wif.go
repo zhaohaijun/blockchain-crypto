@@ -12,7 +12,7 @@ import (
 	"github.com/zhaohaijun/blockchain-crypto/ec"
 )
 
-func Key2WIF(key ec.PrivateKey) ([]byte, error) {
+func Key2WIF(key PrivateKey) ([]byte, error) {
 	data := SerializePrivateKey(key)
 	if len(data) < 34 || data[0] != byte(PK_ECDSA) || data[1] != byte(P256) {
 		return nil, errors.New("only ECDSA P-256 keys support WIF")
