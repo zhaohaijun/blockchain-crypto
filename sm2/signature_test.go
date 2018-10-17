@@ -4,7 +4,7 @@ import (
     "crypto/rand"
     "math/big"
     "testing"
-    "github.com/zhaohaijun/crypto/sm3"
+    "github.com/zhaohaijun/blockchain-crypto/sm3"
 
 
 )

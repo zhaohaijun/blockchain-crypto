@@ -1,4 +1,4 @@
-package: ontology-crypto
+package: blockchain-crypto
 import:
 - package : golang.org/x/crypto
   repo: https://github.com/golang/crypto.git

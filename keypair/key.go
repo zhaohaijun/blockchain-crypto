@@ -1,38 +1,39 @@
 package keypair
+
 import (
-    "bytes"
-    "crypto"
-    "crypto/elliptic"
-    "crypto/rand"
-    "crypto/sha256"
-    "errors"
-    "fmt"
-    "math/big"
-    "reflect"
+	"bytes"
+	"crypto"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/sha256"
+	"errors"
+	"fmt"
+	"math/big"
+	"reflect"
 
-    base58 "github.com/itchyny/base58-go"
-    "github.com/zhaohaijun/crypto/ec"
+	base58 "github.com/itchyny/base58-go"
+	"github.com/zhaohaijun/blockchain-crypto/ec"
 
-    "golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ed25519"
 )
 
 type PublicKey crypto.PublicKey
 
 type PrivateKey interface {
-    crypto.PrivateKey
-    Public() crypto.PublicKey
+	crypto.PrivateKey
+	Public() crypto.PublicKey
 }
 
 type KeyType byte
 
 // Supported key types
 const (
-    PK_ECDSA KeyType = 0x12
-    PK_SM2   KeyType = 0x13
-    PK_EDDSA KeyType = 0x14
+	PK_ECDSA KeyType = 0x12
+	PK_SM2   KeyType = 0x13
+	PK_EDDSA KeyType = 0x14
 
-    PK_P256_E KeyType = 0x02
-    PK_P256_O KeyType = 0x03
+	PK_P256_E KeyType = 0x02
+	PK_P256_O KeyType = 0x03
 )
 
 const err_generate = "key pair generation failed, "
@@ -43,56 +44,56 @@ const err_generate = "key pair generation failed, "
 //     SM2:   same as ECDSA
 //     EdDSA: a byte specifies the curve, only ED25519 supported currently.
 func GenerateKeyPair(t KeyType, opts interface{}) (PrivateKey, PublicKey, error) {
-    switch t {
-    case PK_ECDSA, PK_SM2:
-        param, ok := opts.(byte)
-        if !ok {
-            return nil, nil, errors.New(err_generate + "invalid EC options, 1 byte curve label excepted")
-        }
-        c, err := GetCurve(param)
-        if err != nil {
-            return nil, nil, errors.New(err_generate + err.Error())
-        }
+	switch t {
+	case PK_ECDSA, PK_SM2:
+		param, ok := opts.(byte)
+		if !ok {
+			return nil, nil, errors.New(err_generate + "invalid EC options, 1 byte curve label excepted")
+		}
+		c, err := GetCurve(param)
+		if err != nil {
+			return nil, nil, errors.New(err_generate + err.Error())
+		}
 
-        if t == PK_ECDSA {
-            return ec.GenerateECKeyPair(c, rand.Reader, ec.ECDSA)
-        } else {
-            return ec.GenerateECKeyPair(c, rand.Reader, ec.SM2)
-        }
+		if t == PK_ECDSA {
+			return ec.GenerateECKeyPair(c, rand.Reader, ec.ECDSA)
+		} else {
+			return ec.GenerateECKeyPair(c, rand.Reader, ec.SM2)
+		}
 
-    case PK_EDDSA:
-        param, ok := opts.(byte)
-        if !ok {
-            return nil, nil, errors.New(err_generate + "invalid EdDSA option")
-        }
+	case PK_EDDSA:
+		param, ok := opts.(byte)
+		if !ok {
+			return nil, nil, errors.New(err_generate + "invalid EdDSA option")
+		}
 
-        if param == ED25519 {
-            pub, pri, err := ed25519.GenerateKey(rand.Reader)
-            return pri, pub, err
-        } else {
-            return nil, nil, errors.New(err_generate + "unsupported EdDSA scheme")
-        }
-    default:
-        return nil, nil, errors.New(err_generate + "unknown algorithm")
-    }
+		if param == ED25519 {
+			pub, pri, err := ed25519.GenerateKey(rand.Reader)
+			return pri, pub, err
+		} else {
+			return nil, nil, errors.New(err_generate + "unsupported EdDSA scheme")
+		}
+	default:
+		return nil, nil, errors.New(err_generate + "unknown algorithm")
+	}
 }
 
 func GetKeyType(p PublicKey) KeyType {
-    switch t := p.(type) {
-    case *ec.PublicKey:
-        switch t.Algorithm {
-        case ec.ECDSA:
-            return PK_ECDSA
-        case ec.SM2:
-            return PK_SM2
-        default:
-            panic("unknown public key type")
-        }
-    case ed25519.PublicKey:
-        return PK_EDDSA
-    default:
-        panic("unknown public key type")
-    }
+	switch t := p.(type) {
+	case *ec.PublicKey:
+		switch t.Algorithm {
+		case ec.ECDSA:
+			return PK_ECDSA
+		case ec.SM2:
+			return PK_SM2
+		default:
+			panic("unknown public key type")
+		}
+	case ed25519.PublicKey:
+		return PK_EDDSA
+	default:
+		panic("unknown public key type")
+	}
 }
 
 // SerializePublicKey serializes the public key to a byte sequence as the
@@ -120,90 +121,90 @@ func GetKeyType(p PublicKey) KeyType {
 //
 // This function will panic if error occurs.
 func SerializePublicKey(key PublicKey) []byte {
-    var buf bytes.Buffer
-    switch t := key.(type) {
-    case *ec.PublicKey:
-        switch t.Algorithm {
-        case ec.ECDSA:
-            // Take P-256 as a special case
-            if t.Params().Name == elliptic.P256().Params().Name {
-                return ec.EncodePublicKey(t.PublicKey, true)
-            }
-            buf.WriteByte(byte(PK_ECDSA))
-        case ec.SM2:
-            buf.WriteByte(byte(PK_SM2))
-        }
-        label, err := GetCurveLabel(t.Curve)
-        if err != nil {
-            panic(err)
-        }
-        buf.WriteByte(label)
-        buf.Write(ec.EncodePublicKey(t.PublicKey, true))
-    case ed25519.PublicKey:
-        buf.WriteByte(byte(PK_EDDSA))
-        buf.WriteByte(ED25519)
-        buf.Write([]byte(t))
-    default:
-        panic("unknown public key type")
-    }
+	var buf bytes.Buffer
+	switch t := key.(type) {
+	case *ec.PublicKey:
+		switch t.Algorithm {
+		case ec.ECDSA:
+			// Take P-256 as a special case
+			if t.Params().Name == elliptic.P256().Params().Name {
+				return ec.EncodePublicKey(t.PublicKey, true)
+			}
+			buf.WriteByte(byte(PK_ECDSA))
+		case ec.SM2:
+			buf.WriteByte(byte(PK_SM2))
+		}
+		label, err := GetCurveLabel(t.Curve)
+		if err != nil {
+			panic(err)
+		}
+		buf.WriteByte(label)
+		buf.Write(ec.EncodePublicKey(t.PublicKey, true))
+	case ed25519.PublicKey:
+		buf.WriteByte(byte(PK_EDDSA))
+		buf.WriteByte(ED25519)
+		buf.Write([]byte(t))
+	default:
+		panic("unknown public key type")
+	}
 
-    return buf.Bytes()
+	return buf.Bytes()
 }
 
 // DeserializePublicKey parse the byte sequencce to a public key.
 func DeserializePublicKey(data []byte) (PublicKey, error) {
-    if len(data) <= 3 {
-        return nil, errors.New("too short pubkey")
-    }
-    switch KeyType(data[0]) {
-    case PK_ECDSA, PK_SM2:
-        c, err := GetCurve(data[1])
-        if err != nil {
-            return nil, err
-        }
-        pub, err := ec.DecodePublicKey(data[2:], c)
-        if err != nil {
-            return nil, err
-        }
-        pk := &ec.PublicKey{PublicKey: pub}
-        switch KeyType(data[0]) {
-        case PK_ECDSA:
-            pk.Algorithm = ec.ECDSA
-        case PK_SM2:
-            pk.Algorithm = ec.SM2
-        default:
-            return nil, errors.New("deserializing public key failed: unknown EC algorithm")
-        }
+	if len(data) <= 3 {
+		return nil, errors.New("too short pubkey")
+	}
+	switch KeyType(data[0]) {
+	case PK_ECDSA, PK_SM2:
+		c, err := GetCurve(data[1])
+		if err != nil {
+			return nil, err
+		}
+		pub, err := ec.DecodePublicKey(data[2:], c)
+		if err != nil {
+			return nil, err
+		}
+		pk := &ec.PublicKey{PublicKey: pub}
+		switch KeyType(data[0]) {
+		case PK_ECDSA:
+			pk.Algorithm = ec.ECDSA
+		case PK_SM2:
+			pk.Algorithm = ec.SM2
+		default:
+			return nil, errors.New("deserializing public key failed: unknown EC algorithm")
+		}
 
-        return pk, nil
+		return pk, nil
 
-    case PK_EDDSA:
-        if data[1] == ED25519 {
-            if len(data[2:]) < ed25519.PublicKeySize {
-                return nil, errors.New("deserializing public key failed: not enough length for Ed25519 key")
-            }
-            pk := make([]byte, len(data)-2)
-            copy(pk, data[2:])
-            return ed25519.PublicKey(pk), nil
-        } else {
-            return nil, errors.New("deserializing public key failed: unsupported EdDSA scheme")
-        }
+	case PK_EDDSA:
+		if data[1] == ED25519 {
+			if len(data[2:]) < ed25519.PublicKeySize {
+				return nil, errors.New("deserializing public key failed: not enough length for Ed25519 key")
+			}
+			pk := make([]byte, len(data)-2)
+			copy(pk, data[2:])
+			return ed25519.PublicKey(pk), nil
+		} else {
+			return nil, errors.New("deserializing public key failed: unsupported EdDSA scheme")
+		}
 
-    case PK_P256_E, PK_P256_O:
-        pub, err := ec.DecodePublicKey(data, elliptic.P256())
-        if err != nil {
-            return nil, errors.New("deserializing public key failed: decode P-256 public key error")
-        }
+	case PK_P256_E, PK_P256_O:
+		pub, err := ec.DecodePublicKey(data, elliptic.P256())
+		if err != nil {
+			return nil, errors.New("deserializing public key failed: decode P-256 public key error")
+		}
 
-        pk := &ec.PublicKey{
-            Algorithm: ec.ECDSA,
-            PublicKey: pub,
-        }
-        return pk, nil
+		pk := &ec.PublicKey{
+			Algorithm: ec.ECDSA,
+			PublicKey: pub,
+		}
+		return pk, nil
 
-    default:
-        return nil, errors.New("deserializing public key failed: unrecognized algorithm label")
-    }
+	default:
+		return nil, errors.New("deserializing public key failed: unrecognized algorithm label")
+	}
 
 }
 
@@ -230,132 +231,132 @@ func DeserializePublicKey(data []byte) (PublicKey, error) {
 //
 // This function will panic if error occurs.
 func SerializePrivateKey(pri PrivateKey) []byte {
-    var buf bytes.Buffer
-    switch t := pri.(type) {
-    case *ec.PrivateKey:
-        switch t.Algorithm {
-        case ec.ECDSA:
-            buf.WriteByte(byte(PK_ECDSA))
-        case ec.SM2:
-            buf.WriteByte(byte(PK_SM2))
-        }
-        label, err := GetCurveLabel(t.Curve)
-        if err != nil {
-            panic(err)
-        }
-        buf.WriteByte(label)
-        size := (t.Params().BitSize + 7) >> 3
-        dBytes := t.D.Bytes()
-        for i := len(dBytes); i < size; i++ {
-            buf.WriteByte(byte(0))
-        }
-        buf.Write(dBytes)
-        buf.Write(ec.EncodePublicKey(&t.PublicKey, true))
-    case ed25519.PrivateKey:
-        buf.WriteByte(byte(PK_EDDSA))
-        buf.WriteByte(byte(ED25519))
-        buf.Write(t)
-    default:
-        panic("unkown private key type")
-    }
-    return buf.Bytes()
+	var buf bytes.Buffer
+	switch t := pri.(type) {
+	case *ec.PrivateKey:
+		switch t.Algorithm {
+		case ec.ECDSA:
+			buf.WriteByte(byte(PK_ECDSA))
+		case ec.SM2:
+			buf.WriteByte(byte(PK_SM2))
+		}
+		label, err := GetCurveLabel(t.Curve)
+		if err != nil {
+			panic(err)
+		}
+		buf.WriteByte(label)
+		size := (t.Params().BitSize + 7) >> 3
+		dBytes := t.D.Bytes()
+		for i := len(dBytes); i < size; i++ {
+			buf.WriteByte(byte(0))
+		}
+		buf.Write(dBytes)
+		buf.Write(ec.EncodePublicKey(&t.PublicKey, true))
+	case ed25519.PrivateKey:
+		buf.WriteByte(byte(PK_EDDSA))
+		buf.WriteByte(byte(ED25519))
+		buf.Write(t)
+	default:
+		panic("unkown private key type")
+	}
+	return buf.Bytes()
 }
 
 // DeserializePrivateKey parses the input byte array into private key.
 func DeserializePrivateKey(data []byte) (pri PrivateKey, err error) {
-    switch KeyType(data[0]) {
-    case PK_ECDSA, PK_SM2:
-        c, err1 := GetCurve(data[1])
-        if err1 != nil {
-            err = err1
-            return
-        }
-        size := (c.Params().BitSize + 7) >> 3
-        if len(data) < size*2+3 {
-            err = errors.New("deserializing private key failed: not enough length")
-            return
-        }
+	switch KeyType(data[0]) {
+	case PK_ECDSA, PK_SM2:
+		c, err1 := GetCurve(data[1])
+		if err1 != nil {
+			err = err1
+			return
+		}
+		size := (c.Params().BitSize + 7) >> 3
+		if len(data) < size*2+3 {
+			err = errors.New("deserializing private key failed: not enough length")
+			return
+		}
 
-        key := &ec.PrivateKey{
-            Algorithm:  ec.ECDSA,
-            PrivateKey: ec.ConstructPrivateKey(data[2:2+size], c),
-        }
+		key := &ec.PrivateKey{
+			Algorithm:  ec.ECDSA,
+			PrivateKey: ec.ConstructPrivateKey(data[2:2+size], c),
+		}
 
-        p, err1 := ec.DecodePublicKey(data[2+size:], c)
-        if err1 != nil {
-            err = fmt.Errorf("deserializing private key failed: %s", err1)
-            return
-        }
-        if key.X.Cmp(p.X) != 0 || key.Y.Cmp(p.Y) != 0 {
-            err = errors.New("deserializing private key failed: unmatched private and public key")
-            return
-        }
+		p, err1 := ec.DecodePublicKey(data[2+size:], c)
+		if err1 != nil {
+			err = fmt.Errorf("deserializing private key failed: %s", err1)
+			return
+		}
+		if key.X.Cmp(p.X) != 0 || key.Y.Cmp(p.Y) != 0 {
+			err = errors.New("deserializing private key failed: unmatched private and public key")
+			return
+		}
 
-        switch KeyType(data[0]) {
-        case PK_ECDSA:
-            key.Algorithm = ec.ECDSA
-        case PK_SM2:
-            key.Algorithm = ec.SM2
-        }
-        pri = key
+		switch KeyType(data[0]) {
+		case PK_ECDSA:
+			key.Algorithm = ec.ECDSA
+		case PK_SM2:
+			key.Algorithm = ec.SM2
+		}
+		pri = key
 
-    case PK_EDDSA:
-        if data[1] == ED25519 {
-            if len(data) < 2+ed25519.PrivateKeySize {
-                err = errors.New("deserializing private key failed: not enough length for Ed25519 key")
-                return
-            }
-            pri = ed25519.PrivateKey(data[2:])
-        } else {
-            err = errors.New("deserializing private key failed: unknown EdDSA curve type")
-            return
-        }
-    }
-    return
+	case PK_EDDSA:
+		if data[1] == ED25519 {
+			if len(data) < 2+ed25519.PrivateKeySize {
+				err = errors.New("deserializing private key failed: not enough length for Ed25519 key")
+				return
+			}
+			pri = ed25519.PrivateKey(data[2:])
+		} else {
+			err = errors.New("deserializing private key failed: unknown EdDSA curve type")
+			return
+		}
+	}
+	return
 }
 
 // ComparePublicKey checks whether the two public key are the same.
 func ComparePublicKey(k0, k1 PublicKey) bool {
-    if reflect.TypeOf(k0) != reflect.TypeOf(k1) {
-        return false
-    }
+	if reflect.TypeOf(k0) != reflect.TypeOf(k1) {
+		return false
+	}
 
-    switch v0 := k0.(type) {
-    case *ec.PublicKey:
-        v1 := k1.(*ec.PublicKey)
-        if v0.Algorithm == v1.Algorithm && v0.Params().Name == v1.Params().Name && v0.X.Cmp(v1.X) == 0 {
-            return true
-        }
+	switch v0 := k0.(type) {
+	case *ec.PublicKey:
+		v1 := k1.(*ec.PublicKey)
+		if v0.Algorithm == v1.Algorithm && v0.Params().Name == v1.Params().Name && v0.X.Cmp(v1.X) == 0 {
+			return true
+		}
 
-    case ed25519.PublicKey:
-        v1 := k1.(ed25519.PublicKey)
-        if bytes.Compare(v0, v1) == 0 {
-            return true
-        }
-    }
+	case ed25519.PublicKey:
+		v1 := k1.(ed25519.PublicKey)
+		if bytes.Compare(v0, v1) == 0 {
+			return true
+		}
+	}
 
-    return false
+	return false
 }
 
 // Parse ECDSA P-256 private key in WIF
 func GetP256KeyPairFromWIF(wif []byte) (PrivateKey, error) {
-    buf, err := base58.BitcoinEncoding.Decode(wif)
-    if err != nil {
-        return nil, err
-    }
-    bi, ok := new(big.Int).SetString(string(buf), 10)
-    clearBytes(buf)
-    if !ok || bi == nil {
-        return nil, errors.New("parse WIF error, invalid base58 data")
-    }
-    buf = bi.Bytes()
-    defer clearBytes(buf)
-    pos := len(buf) - 4
-    sum := sha256.Sum256(buf[:pos])
-    sum = sha256.Sum256(sum[:])
-    if !bytes.Equal(sum[:4], buf[pos:]) {
-        return nil, errors.New("invalid WIF data, checksum failed")
-    }
-    pri := ec.ConstructPrivateKey(buf[1:pos-1], elliptic.P256())
-    return &ec.PrivateKey{Algorithm: ec.ECDSA, PrivateKey: pri}, nil
+	buf, err := base58.BitcoinEncoding.Decode(wif)
+	if err != nil {
+		return nil, err
+	}
+	bi, ok := new(big.Int).SetString(string(buf), 10)
+	clearBytes(buf)
+	if !ok || bi == nil {
+		return nil, errors.New("parse WIF error, invalid base58 data")
+	}
+	buf = bi.Bytes()
+	defer clearBytes(buf)
+	pos := len(buf) - 4
+	sum := sha256.Sum256(buf[:pos])
+	sum = sha256.Sum256(sum[:])
+	if !bytes.Equal(sum[:4], buf[pos:]) {
+		return nil, errors.New("invalid WIF data, checksum failed")
+	}
+	pri := ec.ConstructPrivateKey(buf[1:pos-1], elliptic.P256())
+	return &ec.PrivateKey{Algorithm: ec.ECDSA, PrivateKey: pri}, nil
 }

@@ -10,8 +10,8 @@ import (
 
     "golang.org/x/crypto/ed25519"
 
-   "github.com/zhaohaijun/crypto/ec"
-   "github.com/zhaohaijun/crypto/sm2"
+   "github.com/zhaohaijun/blockchain-crypto/ec"
+   "github.com/zhaohaijun/blockchain-crypto/sm2"
 )
 
 type Signature struct {

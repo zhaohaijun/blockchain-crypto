@@ -1,12 +1,12 @@
 package keypair
 
 import (
-    "bytes"
-    "sort"
+	"bytes"
+	"sort"
 
-    "github.com/zhaohaijun/crypto/ec"
+	"github.com/zhaohaijun/blockchain-crypto/ec"
 
-    "golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/ed25519"
 )
 
 // SorPublicKeys sorts the input PublicKey slice and return it.
@@ -19,67 +19,67 @@ import (
 //           2.1.3. else sorted by y.
 //       2.2. EdDSA: sorted by the byte sequence directly.
 func SortPublicKeys(list []PublicKey) []PublicKey {
-    pl := publicKeyList(list)
-    sort.Sort(pl)
-    return pl
+	pl := publicKeyList(list)
+	sort.Sort(pl)
+	return pl
 }
 
 type publicKeyList []PublicKey
 
 func (this publicKeyList) Len() int {
-    return len(this)
+	return len(this)
 }
 
 func (this publicKeyList) Less(i, j int) bool {
-    a, b := this[i], this[j]
-    ta := GetKeyType(a)
-    tb := GetKeyType(b)
-    if ta != tb {
-        return ta < tb
-    }
+	a, b := this[i], this[j]
+	ta := GetKeyType(a)
+	tb := GetKeyType(b)
+	if ta != tb {
+		return ta < tb
+	}
 
-    switch ta {
-    case PK_ECDSA, PK_SM2:
-        va := a.(*ec.PublicKey)
-        vb := b.(*ec.PublicKey)
-        ca, err := GetCurveLabel(va)
-        if err != nil {
-            panic(err)
-        }
-        cb, err := GetCurveLabel(vb)
-        if err != nil {
-            panic(err)
-        }
-        if ca != cb {
-            return ca < cb
-        }
-        cmp := va.X.Cmp(vb.X)
-        if cmp != 0 {
-            return cmp < 0
-        }
-        cmp = va.Y.Cmp(vb.Y)
-        return cmp < 0
-    case PK_EDDSA:
-        va := a.(ed25519.PublicKey)
-        vb := b.(ed25519.PublicKey)
-        return bytes.Compare(va, vb) < 0
-    default:
-        panic("error key type")
-    }
-    return true
+	switch ta {
+	case PK_ECDSA, PK_SM2:
+		va := a.(*ec.PublicKey)
+		vb := b.(*ec.PublicKey)
+		ca, err := GetCurveLabel(va)
+		if err != nil {
+			panic(err)
+		}
+		cb, err := GetCurveLabel(vb)
+		if err != nil {
+			panic(err)
+		}
+		if ca != cb {
+			return ca < cb
+		}
+		cmp := va.X.Cmp(vb.X)
+		if cmp != 0 {
+			return cmp < 0
+		}
+		cmp = va.Y.Cmp(vb.Y)
+		return cmp < 0
+	case PK_EDDSA:
+		va := a.(ed25519.PublicKey)
+		vb := b.(ed25519.PublicKey)
+		return bytes.Compare(va, vb) < 0
+	default:
+		panic("error key type")
+	}
+	return true
 }
 
 func (this publicKeyList) Swap(i, j int) {
-    this[i], this[j] = this[j], this[i]
+	this[i], this[j] = this[j], this[i]
 }
 
 // FindKey finds the specified public key in the list and returns its index
 // or -1 if not found.
 func FindKey(list []PublicKey, key PublicKey) int {
-    for i, v := range list {
-        if ComparePublicKey(v, key) {
-            return i
-        }
-    }
-    return -1
+	for i, v := range list {
+		if ComparePublicKey(v, key) {
+			return i
+		}
+	}
+	return -1
 }
