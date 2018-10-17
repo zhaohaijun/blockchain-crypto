@@ -9,7 +9,7 @@ import (
     "github.com/zhaohaijun/blockchain-crypto/ec"
     "github.com/zhaohaijun/blockchain-crypto/keypair"
     "github.com/zhaohaijun/blockchain-crypto/sm3"
-    "github.com/ontio/ontology/common/log"
+    "github.com/zhaohaijun/blockchain-crypto/common/log"
 )
 
 var (
