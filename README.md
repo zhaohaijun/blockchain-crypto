@@ -1,7 +1,7 @@
-#BlockChain Crypto
+# BlockChain Crypto
 
 Cryptography Library for BlockChain NetWork
-#Usage
+# Usage
 ## Key pair
 Generate a key pair:
 ```go
